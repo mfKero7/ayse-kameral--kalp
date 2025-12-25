@@ -88,9 +88,8 @@
         let heartY = 200;
         const heartSize = 120; // Kalbi biraz büyüttüm iPad için
         let lastTouchTime = 0; // Peş peşe çarpmaları engellemek için
-        const heartImg = new Image();
-        heartImg.src = 'kalp.png'; 
-
+       
+        
         canvasElement.width = window.innerWidth;
         canvasElement.height = window.innerHeight;
 
@@ -184,7 +183,29 @@
             }
             
             canvasCtx.restore();
-            canvasCtx.drawImage(heartImg, heartX, heartY, heartSize, heartSize);
+            // ----- ESKİ drawImage SATIRINI SİL, YERİNE BUNU YAPIŞTIR -----
+
+// Kalp Rengi Ayarı
+canvasCtx.fillStyle = "#ff4757"; // Kırmızımsı tatlı bir renk
+canvasCtx.shadowColor = 'rgba(255, 0, 0, 0.5)'; // Hafif kırmızı gölge
+canvasCtx.shadowBlur = 20; // Gölge bulanıklığı
+
+// Kalbi kodla çizme (Matematiksel kalp şekli)
+const hx = heartX + heartSize / 2; // Kalbin merkezi X
+const hy = heartY + heartSize / 2; // Kalbin merkezi Y
+const size = heartSize / 2; // Çizim boyutu çarpanı
+
+canvasCtx.beginPath();
+canvasCtx.moveTo(hx, hy - size * 0.6);
+canvasCtx.bezierCurveTo(hx + size * 1.2, hy - size * 1.4, hx + size * 2.4, hy + size / 3, hx, hy + size * 1.6);
+canvasCtx.bezierCurveTo(hx - size * 2.4, hy + size / 3, hx - size * 1.2, hy - size * 1.4, hx, hy - size * 0.6);
+canvasCtx.fill();
+canvasCtx.closePath();
+
+// Gölge ayarlarını sıfırla ki başka şeyleri etkilemesin
+canvasCtx.shadowBlur = 0;
+
+// -----------------------------------------------------------
         }
 
         const hands = new Hands({
