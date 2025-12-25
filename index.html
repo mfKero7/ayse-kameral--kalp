@@ -2,74 +2,68 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Ayşe'nin Kalp Avı</title>
+    <title>Ayşe'nin Kalp Avı 2025</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            background: #000; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            touch-action: none; /* Tablette kaydırmayı engelle */
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; touch-action: none; }
+        canvas { display: block; width: 100vw; height: 100vh; object-fit: cover; transition: filter 0.5s; }
+        .blurred { filter: blur(15px) brightness(0.5); } /* Giriş ekranında arkası bulanık olsun */
+
+        /* Arayüz Konteynırı */
+        #ui-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        #score-box { position: absolute; top: 30px; width: 100%; text-align: center; color: #ff4757; font-size: 50px; font-weight: 900; text-shadow: 2px 2px 0 #fff; display: none; }
+        
+        /* Giriş Ekranı Paneli */
+        #start-screen {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9); padding: 30px; border-radius: 25px;
+            text-align: center; box-shadow: 0 0 30px rgba(255, 71, 87, 0.5);
+            width: 80%; max-width: 400px; z-index: 100; pointer-events: auto;
         }
-        canvas { 
-            display: block; 
-            width: 100vw; 
-            height: 100vh; 
-            object-fit: cover;
+        #start-screen h1 { color: #ff4757; margin-bottom: 20px; }
+        #start-screen ul { text-align: left; margin-bottom: 30px; color: #333; line-height: 1.6; }
+        #start-btn { 
+            background: #ff4757; color: white; border: none; padding: 15px 40px; 
+            font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer;
+            transition: transform 0.2s;
         }
-        #ui-container {
-            position: absolute; 
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; /* Tıklamaları engelle */
+        #start-btn:active { transform: scale(0.9); }
+
+        /* Geri Sayım */
+        #countdown {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; font-size: 150px; font-weight: 900; display: none; z-index: 200;
+            text-shadow: 0 0 30px #ff4757;
         }
-        #score-box { 
-            position: absolute;
-            top: 30px; 
-            width: 100%; 
-            text-align: center; 
-            color: #ff4757; 
-            font-size: 50px; 
-            font-weight: 900;
-            text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff; /* Kalın beyaz çerçeve */
-        }
-        #milestone-message {
-            position: absolute;
-            top: 50%;
-            width: 100%;
-            text-align: center;
-            font-size: 60px;
-            color: gold;
-            font-weight: bold;
-            text-shadow: 0 0 20px orange;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-        }
-        /* Uçuşan +1 efekti için stil */
-        .floating-text {
-            position: absolute;
-            color: white;
-            font-size: 30px;
-            font-weight: bold;
-            pointer-events: none;
-            animation: floatUp 1s ease-out forwards;
-            text-shadow: 0 0 5px red;
-        }
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
-        }
+
+        #milestone-message { position: absolute; top: 40%; width: 100%; text-align: center; font-size: 60px; color: gold; font-weight: bold; opacity: 0; transition: opacity 0.5s; }
+        .floating-text { position: absolute; color: white; font-size: 30px; font-weight: bold; animation: floatUp 1s forwards; text-shadow: 0 0 5px red; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
     </style>
 </head>
 <body>
     <video id="webcam" style="display:none;" autoplay playsinline></video>
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas" class="blurred"></canvas>
+
+    <div id="start-screen">
+        <h1>Hazır mısın Ayşe? ❤️</h1>
+        <p><b>Dikkat Edilmesi Gerekenler:</b></p>
+        <ul>
+            <li>💡 Işık seviyesi iyi mi? (Yeşil gözlerin belli olsun💚).</li>
+            <li>📏 Tabletten 1-2 metre uzaklaş.</li>
+            <li>☝️ İşaret parmağını kullanacaksın.</li>
+            <li>💃 Ellerini rahatça hareket ettir.</li>
+        </ul>
+        <button id="start-btn">OYUNA BAŞLA</button>
+    </div>
+
+    <div id="countdown"></div>
 
     <div id="ui-container">
         <div id="score-box">Skor: <span id="score">0</span></div>
         <div id="milestone-message"></div>
     </div>
-
+    
     <audio id="popSound" src="pop.mp3" preload="auto"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
@@ -81,152 +75,127 @@
         const canvasCtx = canvasElement.getContext('2d');
         const scoreElement = document.getElementById('score');
         const popSound = document.getElementById('popSound');
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
+        const countdownElement = document.getElementById('countdown');
+        const scoreBox = document.getElementById('score-box');
         const milestoneMsg = document.getElementById('milestone-message');
 
         let score = 0;
-        let heartX = 200;
-        let heartY = 200;
-        const heartSize = 120; // Kalbi biraz büyüttüm iPad için
-        let lastTouchTime = 0; // Peş peşe çarpmaları engellemek için
-       
-        
+        let heartX = 200, heartY = 200;
+        const heartSize = 100;
+        let lastTouchTime = 0;
+        let gameState = 'waiting'; // waiting, countdown, playing
+
         canvasElement.width = window.innerWidth;
         canvasElement.height = window.innerHeight;
 
-        // Pencere boyutu değişirse canvası ayarla (iPad'i çevirirse diye)
-        window.addEventListener('resize', () => {
-            canvasElement.width = window.innerWidth;
-            canvasElement.height = window.innerHeight;
-            moveHeart();
-        });
+        startBtn.onclick = () => {
+            startScreen.style.display = 'none';
+            startCountdown();
+        };
 
-        function moveHeart() {
-            // Kenarlara çok yapışmasın diye margin bıraktım
-            const margin = 50;
-            heartX = margin + Math.random() * (canvasElement.width - heartSize - margin*2);
-            heartY = margin + Math.random() * (canvasElement.height - heartSize - margin*2);
-        }
-
-        // Uçuşan +1 yazısı oluşturma fonksiyonu
-        function createFloatingText(x, y) {
-            const floatingTxt = document.createElement('div');
-            floatingTxt.className = 'floating-text';
-            floatingTxt.innerText = '+1';
-            floatingTxt.style.left = x + 'px';
-            floatingTxt.style.top = y + 'px';
-            document.getElementById('ui-container').appendChild(floatingTxt);
+        function startCountdown() {
+            gameState = 'countdown';
+            let count = 3;
+            countdownElement.style.display = 'block';
             
-            // 1 saniye sonra sil
-            setTimeout(() => {
-                floatingTxt.remove();
+            const timer = setInterval(() => {
+                if (count > 0) {
+                    countdownElement.innerText = count;
+                } else if (count === 0) {
+                    countdownElement.innerText = "BAŞLA!";
+                    canvasElement.classList.remove('blurred');
+                } else {
+                    clearInterval(timer);
+                    countdownElement.style.display = 'none';
+                    scoreBox.style.display = 'block';
+                    gameState = 'playing';
+                    moveHeart();
+                }
+                count--;
             }, 1000);
         }
 
-        // Ayşe'ye özel mesaj gösterme
-        function showMilestoneMessage(msg) {
-            milestoneMsg.innerText = msg;
-            milestoneMsg.style.opacity = 1;
-            setTimeout(() => {
-                 milestoneMsg.style.opacity = 0;
-            }, 2000); // 2 saniye ekranda kalsın
+        function moveHeart() {
+            heartX = 100 + Math.random() * (canvasElement.width - 200);
+            heartY = 100 + Math.random() * (canvasElement.height - 200);
+        }
+
+        function createFloatingText(x, y) {
+            const div = document.createElement('div');
+            div.className = 'floating-text';
+            div.innerText = '+1';
+            div.style.left = x + 'px'; div.style.top = y + 'px';
+            document.getElementById('ui-container').appendChild(div);
+            setTimeout(() => div.remove(), 1000);
         }
 
         function onResults(results) {
-            canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             
-            // Ayna modu
+            canvasCtx.save();
             canvasCtx.translate(canvasElement.width, 0);
             canvasCtx.scale(-1, 1);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.restore();
 
-            let isTouching = false; // Bu karede temas var mı?
+            if (gameState === 'playing') {
+                let isHand = false;
+                let fingerX = -100, fingerY = -100;
 
-            if (results.multiHandLandmarks) {
-                for (const landmarks of results.multiHandLandmarks) {
-                    const indexFinger = landmarks[8];
-                    const x = (1 - indexFinger.x) * canvasElement.width; 
-                    const y = indexFinger.y * canvasElement.height;
+                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                    isHand = true;
+                    const lm = results.multiHandLandmarks[0][8];
+                    fingerX = (1 - lm.x) * canvasElement.width;
+                    fingerY = lm.y * canvasElement.height;
 
-                    // Çarpışma Kontrolü
-                    if (x > heartX && x < heartX + heartSize && y > heartY && y < heartY + heartSize) {
-                        isTouching = true;
+                    if (fingerX > heartX && fingerX < heartX + heartSize && fingerY > heartY && fingerY < heartY + heartSize) {
+                        const now = Date.now();
+                        if (now - lastTouchTime > 300) {
+                            score++;
+                            scoreElement.innerText = score;
+                            lastTouchTime = now;
+                            try { popSound.currentTime = 0; popSound.play(); } catch(e){}
+                            createFloatingText(fingerX, fingerY);
+                            moveHeart();
+                            if(score===10) { milestoneMsg.innerText="Süpersin Ayşe! 🔥"; milestoneMsg.style.opacity=1; setTimeout(()=>milestoneMsg.style.opacity=0,2000); }
+                            if(score === 25) { showMsg("AYŞE ALEV ALDI!! 🔥❤️‍🔥"); document.body.style.backgroundColor = "#ff4500"; setTimeout(() => document.body.style.backgroundColor = "#000", 500); }
+                        }
                     }
                 }
+
+                if (isHand) {
+                    canvasCtx.beginPath();
+                    canvasCtx.fillStyle = "#00FFFF";
+                    canvasCtx.shadowColor = "#00FFFF";
+                    canvasCtx.shadowBlur = 20;
+                    canvasCtx.arc(fingerX, fingerY, 12, 0, 2 * Math.PI);
+                    canvasCtx.fill();
+                    canvasCtx.shadowBlur = 0;
+                }
+
+                // Kalbi Çiz
+                canvasCtx.fillStyle = "#ff4757";
+                canvasCtx.shadowColor = "red";
+                canvasCtx.shadowBlur = 15;
+                const hx = heartX + heartSize/2, hy = heartY + heartSize/2, s = heartSize/2;
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(hx, hy - s * 0.6);
+                canvasCtx.bezierCurveTo(hx + s * 1.2, hy - s * 1.4, hx + s * 2.4, hy + s / 3, hx, hy + s * 1.6);
+                canvasCtx.bezierCurveTo(hx - s * 2.4, hy + s / 3, hx - s * 1.2, hy - s * 1.4, hx, hy - s * 0.6);
+                canvasCtx.fill();
+                canvasCtx.shadowBlur = 0;
             }
-
-            // Eğer temas varsa ve son temastan beri 300ms geçtiyse (spam'i önlemek için)
-            const currentTime = Date.now();
-            if (isTouching && (currentTime - lastTouchTime > 300)) {
-                score++;
-                scoreElement.innerText = score;
-                lastTouchTime = currentTime;
-                
-                // --- EFEKTLER BURADA ---
-                
-                // 1. Ses Çal (Hata verirse oyunu durdurma)
-                try {
-                    popSound.currentTime = 0; // Sesi başa sar
-                    popSound.play();
-                } catch (e) { console.log("Ses çalınamadı (tarayıcı engeli olabilir)."); }
-
-                // 2. Uçuşan yazıyı çıkar
-                createFloatingText(heartX + heartSize/2, heartY);
-
-                // 3. Kalbi taşı
-                moveHeart();
-
-                // 4. Özel Mesajlar
-                if (score === 10) showMilestoneMessage("Harikasın Ayşe! Isınıyorsun 🔥");
-                if (score === 25) showMilestoneMessage("AYŞE ALEV ALDI!! 🔥❤️‍🔥");
-        
-            }
-            
-            canvasCtx.restore();
-            // ----- ESKİ drawImage SATIRINI SİL, YERİNE BUNU YAPIŞTIR -----
-
-// Kalp Rengi Ayarı
-canvasCtx.fillStyle = "#ff4757"; // Kırmızımsı tatlı bir renk
-canvasCtx.shadowColor = 'rgba(255, 0, 0, 0.5)'; // Hafif kırmızı gölge
-canvasCtx.shadowBlur = 20; // Gölge bulanıklığı
-
-// Kalbi kodla çizme (Matematiksel kalp şekli)
-const hx = heartX + heartSize / 2; // Kalbin merkezi X
-const hy = heartY + heartSize / 2; // Kalbin merkezi Y
-const size = heartSize / 2; // Çizim boyutu çarpanı
-
-canvasCtx.beginPath();
-canvasCtx.moveTo(hx, hy - size * 0.6);
-canvasCtx.bezierCurveTo(hx + size * 1.2, hy - size * 1.4, hx + size * 2.4, hy + size / 3, hx, hy + size * 1.6);
-canvasCtx.bezierCurveTo(hx - size * 2.4, hy + size / 3, hx - size * 1.2, hy - size * 1.4, hx, hy - size * 0.6);
-canvasCtx.fill();
-canvasCtx.closePath();
-
-// Gölge ayarlarını sıfırla ki başka şeyleri etkilemesin
-canvasCtx.shadowBlur = 0;
-
-// -----------------------------------------------------------
         }
 
-        const hands = new Hands({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-        });
-
-        hands.setOptions({
-            maxNumHands: 1,
-            modelComplexity: 1,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
-
+        const hands = new Hands({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+        hands.setOptions({maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
         hands.onResults(onResults);
 
         const camera = new Camera(videoElement, {
-            onFrame: async () => {
-                await hands.send({image: videoElement});
-            },
-            width: 1280,
-            height: 720
+            onFrame: async () => { await hands.send({image: videoElement}); },
+            width: 1280, height: 720
         });
         camera.start();
     </script>
