@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Ayşe'nin Kalp Avı 2025 💍</title>
+    <title>Ayşe'nin Kalp Avı</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; touch-action: none; }
@@ -21,14 +21,11 @@
         #start-btn { background: #ff4757; color: white; border: none; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer; }
         #countdown { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 150px; font-weight: 900; display: none; z-index: 200; text-shadow: 0 0 30px #ff4757; }
         #milestone-message { position: absolute; top: 40%; width: 100%; text-align: center; font-size: 55px; color: gold; font-weight: bold; text-shadow: 0 0 20px #000; opacity: 0; transition: opacity 0.4s; z-index: 50; }
-        
-        /* Hile Dokunma Alanı (Görünmez) */
         #cheat-zone { position: absolute; top: 0; left: 0; width: 100px; height: 100px; z-index: 1000; pointer-events: auto; }
     </style>
 </head>
 <body>
     <div id="cheat-zone"></div>
-
     <video id="webcam" style="display:none;" autoplay playsinline></video>
     <canvas id="gameCanvas" class="blurred"></canvas>
 
@@ -49,7 +46,9 @@
         <div id="score-box">Skor: <span id="score">0</span></div>
         <div id="milestone-message"></div>
     </div>
+    
     <audio id="popSound" src="pop.mp3" preload="auto"></audio>
+    <audio id="bgMusic" src="muzik.mp3" loop preload="auto"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -60,6 +59,7 @@
         const canvasCtx = canvasElement.getContext('2d');
         const scoreElement = document.getElementById('score');
         const popSound = document.getElementById('popSound');
+        const bgMusic = document.getElementById('bgMusic');
         const startScreen = document.getElementById('start-screen');
         const startBtn = document.getElementById('start-btn');
         const countdownElement = document.getElementById('countdown');
@@ -72,15 +72,12 @@
         const heartSize = 100;
         let lastTouchTime = 0;
         let gameState = 'waiting';
-
-        // Hile Değişkenleri
         let cheatTapCount = 0;
         let lastTapTime = 0;
 
         canvasElement.width = window.innerWidth;
         canvasElement.height = window.innerHeight;
 
-        // --- HİLE FONKSİYONU ---
         function activateCheat() {
             if (gameState === 'playing') {
                 score = 1911;
@@ -91,30 +88,24 @@
             }
         }
 
-        // 1. Klavyeli Hile (F Tuşu)
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'f' || e.key === 'F') activateCheat();
-        });
-
-        // 2. Tablette Dokunmatik Hile (Sol üst 3 tık)
+        window.addEventListener('keydown', (e) => { if (e.key === 'f' || e.key === 'F') activateCheat(); });
         cheatZone.addEventListener('touchstart', (e) => {
             const now = Date.now();
-            if (now - lastTapTime < 500) {
-                cheatTapCount++;
-            } else {
-                cheatTapCount = 1;
-            }
+            if (now - lastTapTime < 500) cheatTapCount++;
+            else cheatTapCount = 1;
             lastTapTime = now;
-
-            if (cheatTapCount === 3) {
-                activateCheat();
-                cheatTapCount = 0;
-            }
+            if (cheatTapCount === 3) { activateCheat(); cheatTapCount = 0; }
         });
 
         startBtn.onclick = () => {
+            // MÜZİĞİ BAŞLAT (Butona basıldığı an çalar)
+            if (bgMusic) {
+                bgMusic.volume = 0.4; // Ses seviyesi (%40 idealdir)
+                bgMusic.play().catch(e => console.log("Müzik çalınamadı:", e));
+            }
+            // Efekt Ses Kilidini Aç
             if (popSound) {
-                 popSound.play().then(() => { popSound.pause(); popSound.currentTime = 0; }).catch(e => {});
+                popSound.play().then(() => { popSound.pause(); popSound.currentTime = 0; }).catch(e => {});
             }
             startScreen.style.display = 'none';
             startCountdown();
@@ -189,7 +180,7 @@
                 }
 
                 if (isHand && landmarks) {
-                    // Lazer (Kırmızı)
+                    // Lazer
                     canvasCtx.beginPath();
                     canvasCtx.fillStyle = "#FF0000"; 
                     canvasCtx.shadowColor = "#FF3333"; 
@@ -198,7 +189,7 @@
                     canvasCtx.fill();
                     canvasCtx.shadowBlur = 0;
 
-                    // Yüzük 💍
+                    // Yüzük
                     const ringFinger = landmarks[14];
                     const rX = (1 - ringFinger.x) * canvasElement.width;
                     const rY = ringFinger.y * canvasElement.height;
