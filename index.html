@@ -1,38 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-    <title>Ayşe için Kalp Yakalamace</title>
+    <meta charset="UTF-8">
+    <title>Ayşe'nin Kalp Avı</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-    body { 
-        margin: 0; 
-        overflow: hidden; 
-        background: #000; 
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-        touch-action: none; /* Tablette yanlışlıkla kaydırmasın diye */
-    }
-    canvas { 
-        display: block; 
-        width: 100vw; 
-        height: 100vh; 
-        object-fit: cover; /* Ekranı tam kaplasın */
-    }
-    #ui { 
-        position: absolute; 
-        top: 30px; 
-        width: 100%; 
-        text-align: center; 
-        color: white; 
-        font-size: 40px; 
-        font-weight: bold;
-        text-shadow: 0 0 10px #ff0000;
-        pointer-events: none; /* Skora tıklayınca oyun durmasın */
-    }
-</style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #000; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            touch-action: none; /* Tablette kaydırmayı engelle */
+        }
+        canvas { 
+            display: block; 
+            width: 100vw; 
+            height: 100vh; 
+            object-fit: cover;
+        }
+        #ui-container {
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; /* Tıklamaları engelle */
+        }
+        #score-box { 
+            position: absolute;
+            top: 30px; 
+            width: 100%; 
+            text-align: center; 
+            color: #ff4757; 
+            font-size: 50px; 
+            font-weight: 900;
+            text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff; /* Kalın beyaz çerçeve */
+        }
+        #milestone-message {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            text-align: center;
+            font-size: 60px;
+            color: gold;
+            font-weight: bold;
+            text-shadow: 0 0 20px orange;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        /* Uçuşan +1 efekti için stil */
+        .floating-text {
+            position: absolute;
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 0 0 5px red;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+    </style>
 </head>
 <body>
-    <div id="ui">Skor: <span id="score">0</span></div>
     <video id="webcam" style="display:none;" autoplay playsinline></video>
     <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-container">
+        <div id="score-box">Skor: <span id="score">0</span></div>
+        <div id="milestone-message"></div>
+    </div>
+
+    <audio id="popSound" src="pop.mp3" preload="auto"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -42,51 +80,110 @@
         const canvasElement = document.getElementById('gameCanvas');
         const canvasCtx = canvasElement.getContext('2d');
         const scoreElement = document.getElementById('score');
+        const popSound = document.getElementById('popSound');
+        const milestoneMsg = document.getElementById('milestone-message');
 
         let score = 0;
         let heartX = 200;
         let heartY = 200;
-        const heartSize = 100;
+        const heartSize = 120; // Kalbi biraz büyüttüm iPad için
+        let lastTouchTime = 0; // Peş peşe çarpmaları engellemek için
         const heartImg = new Image();
-        heartImg.src = 'kalp.png'; // Kalp resminin adıyla aynı olmalı
+        heartImg.src = 'kalp.png'; 
 
         canvasElement.width = window.innerWidth;
         canvasElement.height = window.innerHeight;
 
+        // Pencere boyutu değişirse canvası ayarla (iPad'i çevirirse diye)
+        window.addEventListener('resize', () => {
+            canvasElement.width = window.innerWidth;
+            canvasElement.height = window.innerHeight;
+            moveHeart();
+        });
+
         function moveHeart() {
-            heartX = Math.random() * (canvasElement.width - heartSize);
-            heartY = Math.random() * (canvasElement.height - heartSize);
+            // Kenarlara çok yapışmasın diye margin bıraktım
+            const margin = 50;
+            heartX = margin + Math.random() * (canvasElement.width - heartSize - margin*2);
+            heartY = margin + Math.random() * (canvasElement.height - heartSize - margin*2);
+        }
+
+        // Uçuşan +1 yazısı oluşturma fonksiyonu
+        function createFloatingText(x, y) {
+            const floatingTxt = document.createElement('div');
+            floatingTxt.className = 'floating-text';
+            floatingTxt.innerText = '+1';
+            floatingTxt.style.left = x + 'px';
+            floatingTxt.style.top = y + 'px';
+            document.getElementById('ui-container').appendChild(floatingTxt);
+            
+            // 1 saniye sonra sil
+            setTimeout(() => {
+                floatingTxt.remove();
+            }, 1000);
+        }
+
+        // Ayşe'ye özel mesaj gösterme
+        function showMilestoneMessage(msg) {
+            milestoneMsg.innerText = msg;
+            milestoneMsg.style.opacity = 1;
+            setTimeout(() => {
+                 milestoneMsg.style.opacity = 0;
+            }, 2000); // 2 saniye ekranda kalsın
         }
 
         function onResults(results) {
-            // Arka planı (kamerayı) çiz
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             
-            // Görüntüyü ayna modu yapalım
+            // Ayna modu
             canvasCtx.translate(canvasElement.width, 0);
             canvasCtx.scale(-1, 1);
-            
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+            let isTouching = false; // Bu karede temas var mı?
 
             if (results.multiHandLandmarks) {
                 for (const landmarks of results.multiHandLandmarks) {
-                    // İşaret parmağı ucu (Landmark 8)
                     const indexFinger = landmarks[8];
-                    const x = (1 - indexFinger.x) * canvasElement.width; // Ayna modu olduğu için 1-x
+                    const x = (1 - indexFinger.x) * canvasElement.width; 
                     const y = indexFinger.y * canvasElement.height;
 
-                    // Çarpışma kontrolü
+                    // Çarpışma Kontrolü
                     if (x > heartX && x < heartX + heartSize && y > heartY && y < heartY + heartSize) {
-                        score++;
-                        scoreElement.innerText = score;
-                        moveHeart();
+                        isTouching = true;
                     }
                 }
             }
+
+            // Eğer temas varsa ve son temastan beri 300ms geçtiyse (spam'i önlemek için)
+            const currentTime = Date.now();
+            if (isTouching && (currentTime - lastTouchTime > 300)) {
+                score++;
+                scoreElement.innerText = score;
+                lastTouchTime = currentTime;
+                
+                // --- EFEKTLER BURADA ---
+                
+                // 1. Ses Çal (Hata verirse oyunu durdurma)
+                try {
+                    popSound.currentTime = 0; // Sesi başa sar
+                    popSound.play();
+                } catch (e) { console.log("Ses çalınamadı (tarayıcı engeli olabilir)."); }
+
+                // 2. Uçuşan yazıyı çıkar
+                createFloatingText(heartX + heartSize/2, heartY);
+
+                // 3. Kalbi taşı
+                moveHeart();
+
+                // 4. Özel Mesajlar
+                if (score === 10) showMilestoneMessage("Harikasın Ayşe! Isınıyorsun 🔥");
+                if (score === 25) showMilestoneMessage("AYŞE ALEV ALDI!! 🔥❤️‍🔥");
+        
+            }
             
-            // Kalbi çiz
-            canvasCtx.restore(); // Ayna modundan çıkıp normal çizim yapalım
+            canvasCtx.restore();
             canvasCtx.drawImage(heartImg, heartX, heartY, heartSize, heartSize);
         }
 
