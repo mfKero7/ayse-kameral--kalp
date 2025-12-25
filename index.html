@@ -78,9 +78,16 @@
         canvasElement.height = window.innerHeight;
 
         startBtn.onclick = () => {
-            startScreen.style.display = 'none';
-            startCountdown();
-        };
+    // SES KİLİDİNİ AÇMA (CRITICAL PATCH)
+    // Boş bir ses tetikleyerek tarayıcının ses motorunu uyandırıyoruz
+    popSound.play().then(() => {
+        popSound.pause();
+        popSound.currentTime = 0;
+    }).catch(e => console.log("Ses motoru uyanamadı:", e));
+
+    startScreen.style.display = 'none';
+    startCountdown();
+};
 
         function startCountdown() {
             gameState = 'countdown';
