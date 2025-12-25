@@ -7,37 +7,24 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; touch-action: none; }
         canvas { display: block; width: 100vw; height: 100vh; object-fit: cover; transition: filter 0.5s; }
-        .blurred { filter: blur(15px) brightness(0.5); } /* Giriş ekranında arkası bulanık olsun */
-
-        /* Arayüz Konteynırı */
+        .blurred { filter: blur(15px) brightness(0.5); }
         #ui-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         #score-box { position: absolute; top: 30px; width: 100%; text-align: center; color: #ff4757; font-size: 50px; font-weight: 900; text-shadow: 2px 2px 0 #fff; display: none; }
-        
-        /* Giriş Ekranı Paneli */
         #start-screen {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.9); padding: 30px; border-radius: 25px;
+            background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 25px;
             text-align: center; box-shadow: 0 0 30px rgba(255, 71, 87, 0.5);
-            width: 90%; max-width: 500px; z-index: 100; pointer-events: auto;
+            width: 90%; max-width: 480px; z-index: 100; pointer-events: auto;
         }
         #start-screen h1 { color: #ff4757; margin-bottom: 20px; }
-        #start-screen ul { text-align: left; margin-bottom: 30px; color: #333; line-height: 1.6; }
+        #start-screen ul { text-align: left; margin-bottom: 30px; color: #333; line-height: 1.8; font-size: 17px; }
         #start-btn { 
             background: #ff4757; color: white; border: none; padding: 15px 40px; 
             font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer;
-            transition: transform 0.2s;
         }
-        #start-btn:active { transform: scale(0.9); }
-
-        /* Geri Sayım */
-        #countdown {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: white; font-size: 150px; font-weight: 900; display: none; z-index: 200;
-            text-shadow: 0 0 30px #ff4757;
-        }
-
-        #milestone-message { position: absolute; top: 40%; width: 100%; text-align: center; font-size: 60px; color: gold; font-weight: bold; opacity: 0; transition: opacity 0.5s; }
-        .floating-text { position: absolute; color: white; font-size: 30px; font-weight: bold; animation: floatUp 1s forwards; text-shadow: 0 0 5px red; }
+        #countdown { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 150px; font-weight: 900; display: none; z-index: 200; text-shadow: 0 0 30px #ff4757; }
+        #milestone-message { position: absolute; top: 40%; width: 100%; text-align: center; font-size: 55px; color: gold; font-weight: bold; text-shadow: 0 0 20px #000; opacity: 0; transition: opacity 0.4s; z-index: 50; }
+        .floating-text { position: absolute; color: white; font-size: 35px; font-weight: bold; animation: floatUp 0.8s forwards; text-shadow: 0 0 5px red; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
     </style>
 </head>
@@ -49,7 +36,7 @@
         <h1>Hazır mısın Ayşe? ❤️</h1>
         <p><b>Dikkat Edilmesi Gerekenler:</b></p>
         <ul>
-            <li>💡 Işık seviyesi iyi mi? (Yeşil gözlerin belli olsun💚).</li>
+            <li>💡 Işık seviyesi iyi mi? (Yeşil gözlerin belli olsun 💚)</li>
             <li>📏 Tabletten 1-2 metre uzaklaş.</li>
             <li>☝️ İşaret parmağını kullanacaksın.</li>
             <li>💃 Ellerini rahatça hareket ettir.</li>
@@ -85,7 +72,7 @@
         let heartX = 200, heartY = 200;
         const heartSize = 100;
         let lastTouchTime = 0;
-        let gameState = 'waiting'; // waiting, countdown, playing
+        let gameState = 'waiting';
 
         canvasElement.width = window.innerWidth;
         canvasElement.height = window.innerHeight;
@@ -99,12 +86,10 @@
             gameState = 'countdown';
             let count = 3;
             countdownElement.style.display = 'block';
-            
             const timer = setInterval(() => {
-                if (count > 0) {
-                    countdownElement.innerText = count;
-                } else if (count === 0) {
-                    countdownElement.innerText = "BAŞLA!";
+                if (count > 0) { countdownElement.innerText = count; }
+                else if (count === 0) { 
+                    countdownElement.innerText = "BAŞLA!"; 
                     canvasElement.classList.remove('blurred');
                 } else {
                     clearInterval(timer);
@@ -122,18 +107,14 @@
             heartY = 100 + Math.random() * (canvasElement.height - 200);
         }
 
-        function createFloatingText(x, y) {
-            const div = document.createElement('div');
-            div.className = 'floating-text';
-            div.innerText = '+1';
-            div.style.left = x + 'px'; div.style.top = y + 'px';
-            document.getElementById('ui-container').appendChild(div);
-            setTimeout(() => div.remove(), 1000);
+        function showMsg(txt) {
+            milestoneMsg.innerText = txt;
+            milestoneMsg.style.opacity = 1;
+            setTimeout(() => { milestoneMsg.style.opacity = 0; }, 2000);
         }
 
         function onResults(results) {
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            
             canvasCtx.save();
             canvasCtx.translate(canvasElement.width, 0);
             canvasCtx.scale(-1, 1);
@@ -150,50 +131,48 @@
                     fingerX = (1 - lm.x) * canvasElement.width;
                     fingerY = lm.y * canvasElement.height;
 
+                    // ÇARPIŞMA KONTROLÜ (Sadece dokunulduğunda çalışır)
                     if (fingerX > heartX && fingerX < heartX + heartSize && fingerY > heartY && fingerY < heartY + heartSize) {
                         const now = Date.now();
-                        if (now - lastTouchTime > 300) {
+                        if (now - lastTouchTime > 400) { // Dokunma hızını bir tık yavaşlattım donmasın diye
                             score++;
                             scoreElement.innerText = score;
                             lastTouchTime = now;
+                            
                             try { popSound.currentTime = 0; popSound.play(); } catch(e){}
-                            createFloatingText(fingerX, fingerY);
                             moveHeart();
-                            // --- SKOR KONTROLLERİ VE MESAJLAR ---
-if (score === 10) {
-    showMsg("Süpersin Ayşe! 🔥");
-} 
 
-if (score === 25) {
-    // Önce mesajı gösterelim
-    showMsg("AYŞE ALEV ALDI!! 🔥❤️‍🔥");
-    
-    // Ekrana anlık bir alev efekti (turuncu parlama) verelim
-    document.body.style.backgroundColor = "#ff4500"; 
-    setTimeout(() => {
-        document.body.style.backgroundColor = "#000"; // 0.5 saniye sonra eski haline dönsün
-    }, 500);
-}
-
-if (score === 50) {
-    showMsg("Ayşe sen bir EFSANESİN! 👑");
-}
+                            // MESAJLARI SADECE BURADA (PUAN ARTINCA) KONTROL EDİYORUZ
+                            if(score === 10) showMsg("Süpersin Ayşe! 🔥");
+                            if(score === 25) {
+                                showMsg("AYŞE ALEV ALDI!! 🔥❤️‍🔥");
+                                document.body.style.backgroundColor = "#ff4500";
+                                setTimeout(() => document.body.style.backgroundColor = "#000", 500);
+                            }
+                            if(score === 50) showMsg("Kraliçe Ayşe! 👑");
                         }
                     }
                 }
 
+                // --- BURAYI DEĞİŞTİRİYORUZ ---
                 if (isHand) {
                     canvasCtx.beginPath();
-                    canvasCtx.fillStyle = "#00FFFF";
-                    canvasCtx.shadowColor = "#00FFFF";
-                    canvasCtx.shadowBlur = 20;
+                    // Rengi parlak kırmızı yaptık (lazer gibi)
+                    canvasCtx.fillStyle = "#FF0000"; 
+                    // Gölgesi de kırmızı parlasın
+                    canvasCtx.shadowColor = "#FF3333"; 
+                    canvasCtx.shadowBlur = 20; // Parlaklığı biraz artırdım
+                    // Noktayı çiz (Yarıçapı 12px)
                     canvasCtx.arc(fingerX, fingerY, 12, 0, 2 * Math.PI);
                     canvasCtx.fill();
+                    // Gölgeyi sıfırla ki kalbi etkilemesin
                     canvasCtx.shadowBlur = 0;
                 }
+                // -----------------------------
 
-                // Kalbi Çiz
+                // Kalbi Çiz (Burası aynı kalacak, referans olsun diye koydum)
                 canvasCtx.fillStyle = "#ff4757";
+                // ... devamı ...
                 canvasCtx.shadowColor = "red";
                 canvasCtx.shadowBlur = 15;
                 const hx = heartX + heartSize/2, hy = heartY + heartSize/2, s = heartSize/2;
