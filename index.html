@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ayşe için Kalp Yakalamace</title>
+    <style>
+    body { 
+        margin: 0; 
+        overflow: hidden; 
+        background: #000; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        touch-action: none; /* Tablette yanlışlıkla kaydırmasın diye */
+    }
+    canvas { 
+        display: block; 
+        width: 100vw; 
+        height: 100vh; 
+        object-fit: cover; /* Ekranı tam kaplasın */
+    }
+    #ui { 
+        position: absolute; 
+        top: 30px; 
+        width: 100%; 
+        text-align: center; 
+        color: white; 
+        font-size: 40px; 
+        font-weight: bold;
+        text-shadow: 0 0 10px #ff0000;
+        pointer-events: none; /* Skora tıklayınca oyun durmasın */
+    }
+</style>
+</head>
+<body>
+    <div id="ui">Skor: <span id="score">0</span></div>
+    <video id="webcam" style="display:none;" autoplay playsinline></video>
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+    <script>
+        const videoElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('gameCanvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        const scoreElement = document.getElementById('score');
+
+        let score = 0;
+        let heartX = 200;
+        let heartY = 200;
+        const heartSize = 100;
+        const heartImg = new Image();
+        heartImg.src = 'kalp.png'; // Kalp resminin adıyla aynı olmalı
+
+        canvasElement.width = window.innerWidth;
+        canvasElement.height = window.innerHeight;
+
+        function moveHeart() {
+            heartX = Math.random() * (canvasElement.width - heartSize);
+            heartY = Math.random() * (canvasElement.height - heartSize);
+        }
+
+        function onResults(results) {
+            // Arka planı (kamerayı) çiz
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            // Görüntüyü ayna modu yapalım
+            canvasCtx.translate(canvasElement.width, 0);
+            canvasCtx.scale(-1, 1);
+            
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+            if (results.multiHandLandmarks) {
+                for (const landmarks of results.multiHandLandmarks) {
+                    // İşaret parmağı ucu (Landmark 8)
+                    const indexFinger = landmarks[8];
+                    const x = (1 - indexFinger.x) * canvasElement.width; // Ayna modu olduğu için 1-x
+                    const y = indexFinger.y * canvasElement.height;
+
+                    // Çarpışma kontrolü
+                    if (x > heartX && x < heartX + heartSize && y > heartY && y < heartY + heartSize) {
+                        score++;
+                        scoreElement.innerText = score;
+                        moveHeart();
+                    }
+                }
+            }
+            
+            // Kalbi çiz
+            canvasCtx.restore(); // Ayna modundan çıkıp normal çizim yapalım
+            canvasCtx.drawImage(heartImg, heartX, heartY, heartSize, heartSize);
+        }
+
+        const hands = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults(onResults);
+
+        const camera = new Camera(videoElement, {
+            onFrame: async () => {
+                await hands.send({image: videoElement});
+            },
+            width: 1280,
+            height: 720
+        });
+        camera.start();
+    </script>
+</body>
+</html>
