@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Ayşe'nin Kalp Avı 2025</title>
+    <title>Ayşe'nin Kalp Avı 2025 💍</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; touch-action: none; }
@@ -45,12 +45,10 @@
     </div>
 
     <div id="countdown"></div>
-
     <div id="ui-container">
         <div id="score-box">Skor: <span id="score">0</span></div>
         <div id="milestone-message"></div>
     </div>
-    
     <audio id="popSound" src="pop.mp3" preload="auto"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
@@ -78,16 +76,13 @@
         canvasElement.height = window.innerHeight;
 
         startBtn.onclick = () => {
-    // SES KİLİDİNİ AÇMA (CRITICAL PATCH)
-    // Boş bir ses tetikleyerek tarayıcının ses motorunu uyandırıyoruz
-    popSound.play().then(() => {
-        popSound.pause();
-        popSound.currentTime = 0;
-    }).catch(e => console.log("Ses motoru uyanamadı:", e));
-
-    startScreen.style.display = 'none';
-    startCountdown();
-};
+            // SES KİLİDİNİ AÇ (Önceki sorunu çözen kısım)
+            if (popSound) {
+                 popSound.play().then(() => { popSound.pause(); popSound.currentTime = 0; }).catch(e => console.log("Ses kilidi hatası:", e));
+            }
+            startScreen.style.display = 'none';
+            startCountdown();
+        };
 
         function startCountdown() {
             gameState = 'countdown';
@@ -131,25 +126,23 @@
             if (gameState === 'playing') {
                 let isHand = false;
                 let fingerX = -100, fingerY = -100;
+                let landmarks = null;
 
                 if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                     isHand = true;
-                    const lm = results.multiHandLandmarks[0][8];
+                    landmarks = results.multiHandLandmarks[0];
+                    const lm = landmarks[8]; // İşaret parmağı
                     fingerX = (1 - lm.x) * canvasElement.width;
                     fingerY = lm.y * canvasElement.height;
 
-                    // ÇARPIŞMA KONTROLÜ (Sadece dokunulduğunda çalışır)
                     if (fingerX > heartX && fingerX < heartX + heartSize && fingerY > heartY && fingerY < heartY + heartSize) {
                         const now = Date.now();
-                        if (now - lastTouchTime > 400) { // Dokunma hızını bir tık yavaşlattım donmasın diye
+                        if (now - lastTouchTime > 400) {
                             score++;
                             scoreElement.innerText = score;
                             lastTouchTime = now;
-                            
                             try { popSound.currentTime = 0; popSound.play(); } catch(e){}
                             moveHeart();
-
-                            // MESAJLARI SADECE BURADA (PUAN ARTINCA) KONTROL EDİYORUZ
                             if(score === 10) showMsg("Süpersin Ayşe! 🔥");
                             if(score === 25) {
                                 showMsg("AYŞE ALEV ALDI!! 🔥❤️‍🔥");
@@ -161,25 +154,36 @@
                     }
                 }
 
-                // --- BURAYI DEĞİŞTİRİYORUZ ---
-                if (isHand) {
+                if (isHand && landmarks) {
+                    // 1. İŞARET PARMAĞINA KIRMIZI LAZER ÇİZ
                     canvasCtx.beginPath();
-                    // Rengi parlak kırmızı yaptık (lazer gibi)
                     canvasCtx.fillStyle = "#FF0000"; 
-                    // Gölgesi de kırmızı parlasın
                     canvasCtx.shadowColor = "#FF3333"; 
-                    canvasCtx.shadowBlur = 20; // Parlaklığı biraz artırdım
-                    // Noktayı çiz (Yarıçapı 12px)
+                    canvasCtx.shadowBlur = 20;
                     canvasCtx.arc(fingerX, fingerY, 12, 0, 2 * Math.PI);
                     canvasCtx.fill();
-                    // Gölgeyi sıfırla ki kalbi etkilemesin
                     canvasCtx.shadowBlur = 0;
-                }
-                // -----------------------------
 
-                // Kalbi Çiz (Burası aynı kalacak, referans olsun diye koydum)
+                    // 2. YÜZÜK PARMAĞINA ALTIN YÜZÜK ÇİZ (YENİ EKLENTİ 💍)
+                    const ringFinger = landmarks[14]; // Yüzük parmağı eklemi
+                    const ringX = (1 - ringFinger.x) * canvasElement.width;
+                    const ringY = ringFinger.y * canvasElement.height;
+
+                    canvasCtx.beginPath();
+                    canvasCtx.lineWidth = 6; // Yüzük kalınlığı
+                    canvasCtx.strokeStyle = "gold"; // Altın rengi
+                    canvasCtx.shadowColor = "rgba(255, 215, 0, 0.8)"; // Altın parlaması
+                    canvasCtx.shadowBlur = 10;
+                    // İçi boş daire (halka) çiziyoruz
+                    canvasCtx.arc(ringX, ringY, 10, 0, 2 * Math.PI);
+                    canvasCtx.stroke();
+                    // Ayarları sıfırla
+                    canvasCtx.shadowBlur = 0;
+                    canvasCtx.lineWidth = 1;
+                }
+
+                // Kalbi Çiz
                 canvasCtx.fillStyle = "#ff4757";
-                // ... devamı ...
                 canvasCtx.shadowColor = "red";
                 canvasCtx.shadowBlur = 15;
                 const hx = heartX + heartSize/2, hy = heartY + heartSize/2, s = heartSize/2;
