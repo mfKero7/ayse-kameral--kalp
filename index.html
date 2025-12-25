@@ -159,8 +159,25 @@
                             try { popSound.currentTime = 0; popSound.play(); } catch(e){}
                             createFloatingText(fingerX, fingerY);
                             moveHeart();
-                            if(score===10) { milestoneMsg.innerText="Süpersin Ayşe! 🔥"; milestoneMsg.style.opacity=1; setTimeout(()=>milestoneMsg.style.opacity=0,2000); }
-                            if(score === 25) { showMsg("AYŞE ALEV ALDI!! 🔥❤️‍🔥"); document.body.style.backgroundColor = "#ff4500"; setTimeout(() => document.body.style.backgroundColor = "#000", 500); }
+                            // --- SKOR KONTROLLERİ VE MESAJLAR ---
+if (score === 10) {
+    showMsg("Süpersin Ayşe! 🔥");
+} 
+
+if (score === 25) {
+    // Önce mesajı gösterelim
+    showMsg("AYŞE ALEV ALDI!! 🔥❤️‍🔥");
+    
+    // Ekrana anlık bir alev efekti (turuncu parlama) verelim
+    document.body.style.backgroundColor = "#ff4500"; 
+    setTimeout(() => {
+        document.body.style.backgroundColor = "#000"; // 0.5 saniye sonra eski haline dönsün
+    }, 500);
+}
+
+if (score === 50) {
+    showMsg("Ayşe sen bir EFSANESİN! 👑");
+}
                         }
                     }
                 }
