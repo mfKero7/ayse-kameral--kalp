@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Ayşe'nin Kalp Avı 2025 💍</title>
+    <title>Ayşe'nin Kalp Avı</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; touch-action: none; }
@@ -18,14 +18,9 @@
         }
         #start-screen h1 { color: #ff4757; margin-bottom: 20px; }
         #start-screen ul { text-align: left; margin-bottom: 30px; color: #333; line-height: 1.8; font-size: 17px; }
-        #start-btn { 
-            background: #ff4757; color: white; border: none; padding: 15px 40px; 
-            font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer;
-        }
+        #start-btn { background: #ff4757; color: white; border: none; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer; }
         #countdown { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 150px; font-weight: 900; display: none; z-index: 200; text-shadow: 0 0 30px #ff4757; }
         #milestone-message { position: absolute; top: 40%; width: 100%; text-align: center; font-size: 55px; color: gold; font-weight: bold; text-shadow: 0 0 20px #000; opacity: 0; transition: opacity 0.4s; z-index: 50; }
-        .floating-text { position: absolute; color: white; font-size: 35px; font-weight: bold; animation: floatUp 0.8s forwards; text-shadow: 0 0 5px red; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
     </style>
 </head>
 <body>
@@ -75,10 +70,20 @@
         canvasElement.width = window.innerWidth;
         canvasElement.height = window.innerHeight;
 
+        // --- GİZLİ HİLE KODU (BURADA) ---
+        window.addEventListener('keydown', (e) => {
+            if ((e.key === 'f' || e.key === 'F') && gameState === 'playing') {
+                score = 1911;
+                scoreElement.innerText = score;
+                showMsg("HİLE AKTİF: 1911! 😎🔥");
+                document.body.style.backgroundColor = "gold";
+                setTimeout(() => document.body.style.backgroundColor = "#000", 500);
+            }
+        });
+
         startBtn.onclick = () => {
-            // SES KİLİDİNİ AÇ (Önceki sorunu çözen kısım)
             if (popSound) {
-                 popSound.play().then(() => { popSound.pause(); popSound.currentTime = 0; }).catch(e => console.log("Ses kilidi hatası:", e));
+                 popSound.play().then(() => { popSound.pause(); popSound.currentTime = 0; }).catch(e => {});
             }
             startScreen.style.display = 'none';
             startCountdown();
@@ -90,10 +95,8 @@
             countdownElement.style.display = 'block';
             const timer = setInterval(() => {
                 if (count > 0) { countdownElement.innerText = count; }
-                else if (count === 0) { 
-                    countdownElement.innerText = "BAŞLA!"; 
-                    canvasElement.classList.remove('blurred');
-                } else {
+                else if (count === 0) { countdownElement.innerText = "BAŞLA!"; canvasElement.classList.remove('blurred'); }
+                else {
                     clearInterval(timer);
                     countdownElement.style.display = 'none';
                     scoreBox.style.display = 'block';
@@ -125,17 +128,17 @@
 
             if (gameState === 'playing') {
                 let isHand = false;
-                let fingerX = -100, fingerY = -100;
                 let landmarks = null;
+                let fX = -100, fY = -100;
 
                 if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                     isHand = true;
                     landmarks = results.multiHandLandmarks[0];
-                    const lm = landmarks[8]; // İşaret parmağı
-                    fingerX = (1 - lm.x) * canvasElement.width;
-                    fingerY = lm.y * canvasElement.height;
+                    const lm = landmarks[8];
+                    fX = (1 - lm.x) * canvasElement.width;
+                    fY = lm.y * canvasElement.height;
 
-                    if (fingerX > heartX && fingerX < heartX + heartSize && fingerY > heartY && fingerY < heartY + heartSize) {
+                    if (fX > heartX && fX < heartX + heartSize && fY > heartY && fY < heartY + heartSize) {
                         const now = Date.now();
                         if (now - lastTouchTime > 400) {
                             score++;
@@ -155,34 +158,31 @@
                 }
 
                 if (isHand && landmarks) {
-                    // 1. İŞARET PARMAĞINA KIRMIZI LAZER ÇİZ
+                    // Lazer
                     canvasCtx.beginPath();
                     canvasCtx.fillStyle = "#FF0000"; 
                     canvasCtx.shadowColor = "#FF3333"; 
                     canvasCtx.shadowBlur = 20;
-                    canvasCtx.arc(fingerX, fingerY, 12, 0, 2 * Math.PI);
+                    canvasCtx.arc(fX, fY, 12, 0, 2 * Math.PI);
                     canvasCtx.fill();
                     canvasCtx.shadowBlur = 0;
 
-                    // 2. YÜZÜK PARMAĞINA ALTIN YÜZÜK ÇİZ (YENİ EKLENTİ 💍)
-                    const ringFinger = landmarks[14]; // Yüzük parmağı eklemi
-                    const ringX = (1 - ringFinger.x) * canvasElement.width;
-                    const ringY = ringFinger.y * canvasElement.height;
-
+                    // Yüzük 💍
+                    const ringFinger = landmarks[14];
+                    const rX = (1 - ringFinger.x) * canvasElement.width;
+                    const rY = ringFinger.y * canvasElement.height;
                     canvasCtx.beginPath();
-                    canvasCtx.lineWidth = 6; // Yüzük kalınlığı
-                    canvasCtx.strokeStyle = "gold"; // Altın rengi
-                    canvasCtx.shadowColor = "rgba(255, 215, 0, 0.8)"; // Altın parlaması
+                    canvasCtx.lineWidth = 6;
+                    canvasCtx.strokeStyle = "gold";
+                    canvasCtx.shadowColor = "rgba(255, 215, 0, 0.8)";
                     canvasCtx.shadowBlur = 10;
-                    // İçi boş daire (halka) çiziyoruz
-                    canvasCtx.arc(ringX, ringY, 10, 0, 2 * Math.PI);
+                    canvasCtx.arc(rX, rY, 10, 0, 2 * Math.PI);
                     canvasCtx.stroke();
-                    // Ayarları sıfırla
                     canvasCtx.shadowBlur = 0;
                     canvasCtx.lineWidth = 1;
                 }
 
-                // Kalbi Çiz
+                // Kalp Çiz
                 canvasCtx.fillStyle = "#ff4757";
                 canvasCtx.shadowColor = "red";
                 canvasCtx.shadowBlur = 15;
